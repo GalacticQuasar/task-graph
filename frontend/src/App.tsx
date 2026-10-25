@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { useTasks } from './api'
+import { ApiError, useLogout, useMe, useTasks } from './api'
 import { GroupChips } from './components/GroupChips'
+import { Login } from './components/Login'
 import { QuickAdd } from './components/QuickAdd'
 import { TaskEditor } from './components/TaskEditor'
 import { OpenTaskContext } from './openTask'
@@ -35,8 +36,46 @@ function tabFromHash(): Tab {
   return TABS.some((t) => t.id === hash) ? (hash as Tab) : 'next'
 }
 
+/**
+ * Text shared in from Android's share sheet: the manifest's share_target opens
+ * /share?title=…&text=…&url=…. Read once at startup, then the URL becomes /#inbox.
+ */
+function takeSharedText(): string {
+  if (location.pathname !== '/share') return ''
+  const params = new URLSearchParams(location.search)
+  const [title, text, url] = ['title', 'text', 'url'].map((k) => params.get(k)?.trim() ?? '')
+  history.replaceState(null, '', '/#inbox')
+  // Apps often repeat the title or URL inside `text`; don't paste them twice.
+  return [title && !text.startsWith(title) ? title : '', text, url && !text.includes(url) ? url : '']
+    .filter(Boolean)
+    .join(' ')
+}
+
+const sharedText = takeSharedText()
+
 export default function App() {
+  const me = useMe()
+  if (me.isPending) return <p className="status">Loading…</p>
+  if (me.isError) {
+    if (me.error instanceof ApiError && me.error.status === 401) return <Login />
+    return (
+      <main className="app">
+        <p className="status error">Couldn't reach the server: {me.error.message}</p>
+        <p className="status">
+          <button className="toggle" onClick={() => me.refetch()}>
+            Retry
+          </button>
+        </p>
+      </main>
+    )
+  }
+  return <MainApp authEnabled={me.data.auth_enabled} />
+}
+
+function MainApp({ authEnabled }: { authEnabled: boolean }) {
   const [tab, setTab] = useState(tabFromHash)
+  const [shared, setShared] = useState(sharedText)
+  const logout = useLogout()
   const [groupId, setGroupId] = useState<number | undefined>()
   const [showAll, setShowAll] = useState(readShowAll)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -88,7 +127,12 @@ export default function App() {
             <header className="header">
               <h1>Inbox</h1>
             </header>
-            <QuickAdd placeholder="Capture a task" />
+            <QuickAdd
+              placeholder="Capture a task"
+              initialTitle={shared}
+              autoFocus={!!shared}
+              onAdded={() => setShared('')}
+            />
             <Inbox />
           </>
         )}
@@ -104,6 +148,13 @@ export default function App() {
             </header>
             <Completed />
           </>
+        )}
+        {authEnabled && tab !== 'graph' && (
+          <footer className="footer">
+            <button className="link" onClick={() => logout.mutate()}>
+              Log out
+            </button>
+          </footer>
         )}
       </main>
       {editingId !== null && <TaskEditor taskId={editingId} onClose={() => setEditingId(null)} />}

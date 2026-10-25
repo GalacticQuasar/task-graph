@@ -5,13 +5,22 @@ type Props = {
   parentId?: number | null
   groupIds?: number[]
   placeholder: string
+  initialTitle?: string
   autoFocus?: boolean
   onAdded?: (task: Task) => void
   onCancel?: () => void
 }
 
-export function QuickAdd({ parentId = null, groupIds = [], placeholder, autoFocus, onAdded, onCancel }: Props) {
-  const [title, setTitle] = useState('')
+export function QuickAdd({
+  parentId = null,
+  groupIds = [],
+  placeholder,
+  initialTitle = '',
+  autoFocus,
+  onAdded,
+  onCancel,
+}: Props) {
+  const [title, setTitle] = useState(initialTitle)
   const create = useCreateTask()
 
   function submit(e: React.FormEvent) {

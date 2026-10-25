@@ -55,7 +55,7 @@ button {
 .app {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));
 }
 
 .header {
@@ -693,4 +693,49 @@ button {
   color: var(--accent);
   font-weight: 600;
   filter: brightness(1.3);
+}
+
+/* --- login & footer --- */
+
+.login {
+  max-width: 400px;
+  padding-top: calc(15vh + env(safe-area-inset-top));
+}
+
+.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.login input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.login input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.login .primary {
+  padding: 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.login .primary:disabled {
+  opacity: 0.5;
+}
+
+.footer {
+  margin-top: 32px;
+  text-align: center;
 }

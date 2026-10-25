@@ -74,6 +74,9 @@ export const api = {
   deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
   completeTask: (id: number) => post<Task>(`/tasks/${id}/complete`),
   uncompleteTask: (id: number) => post<Task>(`/tasks/${id}/uncomplete`),
+  me: () => request<{ authenticated: boolean; auth_enabled: boolean }>('/me'),
+  login: (token: string) => post<void>('/login', { token }),
+  logout: () => post<void>('/logout'),
   listGroups: () => request<Group[]>('/groups'),
   createGroup: (body: { name: string; color: string }) => post<Group>('/groups', body),
 }
@@ -90,6 +93,29 @@ export function useTasks(view: View, group?: number) {
 export function useTask(id: number) {
   // Lives under the 'tasks' prefix so every task mutation's invalidation refreshes it too.
   return useQuery({ queryKey: ['tasks', 'one', id], queryFn: () => api.getTask(id) })
+}
+
+export function useMe() {
+  return useQuery({ queryKey: ['me'], queryFn: api.me, retry: false, staleTime: Infinity })
+}
+
+export function useLogin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['login'],
+    mutationFn: api.login,
+    // Everything fetched while logged out failed with 401; refetch it all.
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
+export function useLogout() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.logout,
+    // Back to initial state and refetch: /me now 401s, which shows the login screen.
+    onSuccess: () => qc.resetQueries(),
+  })
 }
 
 export function useGroups() {

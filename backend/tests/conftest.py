@@ -7,6 +7,13 @@ from app.db import get_session, init_db
 from app.main import app
 
 
+@pytest.fixture(autouse=True)
+def no_auth_env(monkeypatch):
+    # Auth is off unless a test opts in, regardless of the developer's shell environment.
+    monkeypatch.delenv("TASKGRAPH_TOKEN", raising=False)
+    monkeypatch.delenv("TASKGRAPH_REQUIRE_TOKEN", raising=False)
+
+
 @pytest.fixture
 def engine():
     engine = create_engine(
