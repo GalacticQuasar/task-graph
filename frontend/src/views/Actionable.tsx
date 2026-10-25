@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useGroups, useSetDone, useTasks, type Group, type Task } from '../api'
+import { useEffect, useState } from 'react'
+import { useSetDone, type Group, type Task } from '../api'
 import { TaskRow } from '../components/TaskRow'
-import { buildForest, isActionable, type Forest } from '../forest'
+import { isActionable, type Forest } from '../forest'
+import { useForest } from '../useForest'
 
 type Props = {
   groupId: number | undefined
@@ -11,13 +12,10 @@ type Props = {
 export function Actionable({ groupId, showAll }: Props) {
   // Always fetch every open task (unfiltered) so we can tell heads from successors and
   // preview what comes next, even when a predecessor sits in a different group.
-  const tasks = useTasks('all')
-  const groups = useGroups()
+  const { tasks, forest, groupMap } = useForest()
   const setDone = useSetDone()
   const [lastDone, setLastDone] = useState<Task | null>(null)
 
-  const forest = useMemo(() => buildForest(tasks.data ?? []), [tasks.data])
-  const groupMap = useMemo(() => new Map((groups.data ?? []).map((g) => [g.id, g])), [groups.data])
   const inGroup = (t: Task) => groupId === undefined || t.group_ids.includes(groupId)
 
   useEffect(() => {

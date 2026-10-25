@@ -85,6 +85,48 @@ button {
   color: var(--accent);
 }
 
+/* --- tabs --- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tabs a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 0;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.tabs a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 20px;
+  text-align: center;
+}
+
 /* --- quick add --- */
 
 .quick-add {
@@ -185,6 +227,15 @@ button {
   padding: 0;
 }
 
+.task.done .task-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.task > .triage {
+  margin: -2px 0 10px 44px;
+}
+
 .tasks .tasks {
   margin-left: 22px;
   padding-left: 10px;
@@ -221,6 +272,13 @@ button {
 .task-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
 }
 
 .task-title {
@@ -278,6 +336,175 @@ button {
 .add-next:focus-visible {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+/* --- completed history --- */
+
+.day h2 {
+  margin: 18px 0 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* --- editor sheet --- */
+
+.sheet {
+  width: min(560px, 100vw);
+  max-height: 90dvh;
+  margin: auto auto 0;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (min-width: 600px) {
+  .sheet {
+    margin: auto;
+    border-radius: 16px;
+  }
+}
+
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editor-title {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  background: none;
+}
+
+.editor-title:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field textarea,
+.field input[type='date'],
+.parent-search input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  resize: vertical;
+}
+
+.field input[type='date'] {
+  width: auto;
+}
+
+.chips.wrap {
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.due-row,
+.parent-value {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.parent-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.parent-results li > * {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+}
+
+.parent-results button {
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.parent-results button:hover,
+.parent-results button:focus-visible,
+.parent-results li:first-child button {
+  background: var(--accent-soft);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-actions .spacer {
+  flex: 1;
+}
+
+.editor-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 500;
+}
+
+.editor-actions .primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.editor-actions .danger {
+  border-color: transparent;
+  color: var(--danger);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.hint {
+  margin: 12px 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 /* --- status & toast --- */

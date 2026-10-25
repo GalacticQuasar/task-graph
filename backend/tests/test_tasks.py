@@ -121,3 +121,11 @@ def test_deleting_group_untags_tasks(client):
 def test_duplicate_group_name_conflicts(client):
     client.post("/api/groups", json={"name": "school"})
     assert client.post("/api/groups", json={"name": "school"}).status_code == 409
+
+
+def test_reparent_appends_after_existing_siblings(client):
+    a = client.post("/api/tasks", json={"title": "a"}).json()["id"]
+    b = client.post("/api/tasks", json={"title": "b"}).json()["id"]
+    c = client.post("/api/tasks", json={"title": "c"}).json()["id"]
+    assert client.patch(f"/api/tasks/{b}", json={"parent_id": a}).json()["position"] == 0
+    assert client.patch(f"/api/tasks/{c}", json={"parent_id": a}).json()["position"] == 1

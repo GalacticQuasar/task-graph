@@ -35,8 +35,9 @@ def _set_parent(session: Session, task: Task, parent_id: int | None) -> None:
         raise HTTPException(status.HTTP_409_CONFLICT, str(e))
     except LookupError:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "parent task not found")
-    task.parent_id = parent_id
+    # Query before assigning: autoflush would otherwise count this task among its new siblings.
     task.position = graph.next_position(session, parent_id)
+    task.parent_id = parent_id
 
 
 @router.get("", response_model=list[TaskRead])

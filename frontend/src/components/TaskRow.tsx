@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Group, Task } from '../api'
 import { countDescendants, type Forest } from '../forest'
+import { useOpenTask } from '../openTask'
 import { QuickAdd } from './QuickAdd'
 
 type Props = {
@@ -19,6 +20,7 @@ export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, chil
   // While adding successors, each new task becomes the parent of the next one,
   // so typing "shave ⏎ shower ⏎ trim nails ⏎" builds a chain.
   const [chainParent, setChainParent] = useState<Task | null>(null)
+  const openTask = useOpenTask()
   const next = forest.children.get(task.id) ?? []
   const deeper = countDescendants(forest, task.id) - next.length
 
@@ -31,9 +33,9 @@ export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, chil
           onChange={() => onToggle(task)}
           aria-label={`Complete ${task.title}`}
         />
-        <div className="task-body">
+        <button className="task-body" onClick={() => openTask(task.id)}>
           <span className="task-title">{task.title}</span>
-          <div className="task-meta">
+          <span className="task-meta">
             {task.due_date && <DueDate date={task.due_date} />}
             {task.group_ids.map((id) => {
               const g = groups.get(id)
@@ -51,8 +53,8 @@ export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, chil
                 {deeper > 0 && ` +${deeper}`}
               </span>
             )}
-          </div>
-        </div>
+          </span>
+        </button>
         <button
           className="add-next"
           onClick={() => setChainParent(chainParent ? null : task)}

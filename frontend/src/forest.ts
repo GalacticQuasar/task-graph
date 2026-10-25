@@ -33,3 +33,16 @@ export function countDescendants(forest: Forest, id: number): number {
   for (const child of forest.children.get(id) ?? []) n += 1 + countDescendants(forest, child.id)
   return n
 }
+
+/** Ids of `id` and every open task downstream of it (invalid parents for `id`). */
+export function selfAndDescendants(forest: Forest, id: number): Set<number> {
+  const out = new Set([id])
+  const stack = [id]
+  while (stack.length) {
+    for (const child of forest.children.get(stack.pop()!) ?? []) {
+      out.add(child.id)
+      stack.push(child.id)
+    }
+  }
+  return out
+}

@@ -27,6 +27,14 @@ export type TaskCreate = {
   due_date?: string | null
 }
 
+export type TaskUpdate = {
+  title?: string
+  notes?: string
+  parent_id?: number | null
+  due_date?: string | null
+  group_ids?: number[]
+}
+
 export class ApiError extends Error {
   status: number
 
@@ -59,7 +67,11 @@ const post = <T>(path: string, body?: unknown) =>
 export const api = {
   listTasks: (view: View, group?: number) =>
     request<Task[]>(`/tasks?view=${view}${group === undefined ? '' : `&group=${group}`}`),
+  getTask: (id: number) => request<Task>(`/tasks/${id}`),
   createTask: (body: TaskCreate) => post<Task>('/tasks', body),
+  updateTask: (id: number, body: TaskUpdate) =>
+    request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
   completeTask: (id: number) => post<Task>(`/tasks/${id}/complete`),
   uncompleteTask: (id: number) => post<Task>(`/tasks/${id}/uncomplete`),
   listGroups: () => request<Group[]>('/groups'),
@@ -75,6 +87,11 @@ export function useTasks(view: View, group?: number) {
   })
 }
 
+export function useTask(id: number) {
+  // Lives under the 'tasks' prefix so every task mutation's invalidation refreshes it too.
+  return useQuery({ queryKey: ['tasks', 'one', id], queryFn: () => api.getTask(id) })
+}
+
 export function useGroups() {
   return useQuery({ queryKey: ['groups'], queryFn: api.listGroups })
 }
@@ -84,6 +101,30 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: api.createTask,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: TaskUpdate & { id: number }) => api.updateTask(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+}
+
+export function useDeleteTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.deleteTask,
+    onSuccess: (_data, id) => {
+      // Drop the deleted task's own query instead of refetching it into a 404.
+      const own = ['tasks', 'one', id]
+      qc.removeQueries({ queryKey: own, exact: true })
+      return qc.invalidateQueries({
+        queryKey: ['tasks'],
+        predicate: (q) => q.queryKey.join() !== own.join(),
+      })
+    },
   })
 }
 
