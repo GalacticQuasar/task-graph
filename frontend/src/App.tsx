@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTasks } from './api'
 import { GroupChips } from './components/GroupChips'
 import { QuickAdd } from './components/QuickAdd'
@@ -8,12 +8,16 @@ import { Actionable } from './views/Actionable'
 import { Completed } from './views/Completed'
 import { Inbox } from './views/Inbox'
 
+// React Flow + dagre are heavy; load them only when the Graph tab is opened.
+const GraphView = lazy(() => import('./views/GraphView'))
+
 const SHOW_ALL_KEY = 'taskgraph.showAll'
 
-type Tab = 'next' | 'inbox' | 'done'
+type Tab = 'next' | 'inbox' | 'graph' | 'done'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'next', label: 'Up next' },
   { id: 'inbox', label: 'Inbox' },
+  { id: 'graph', label: 'Graph' },
   { id: 'done', label: 'Done' },
 ]
 
@@ -56,7 +60,7 @@ export default function App() {
 
   return (
     <OpenTaskContext.Provider value={setEditingId}>
-      <main className="app">
+      <main className={tab === 'graph' ? 'app wide' : 'app'}>
         <nav className="tabs" aria-label="Views">
           {TABS.map((t) => (
             <a key={t.id} href={`#${t.id}`} aria-current={tab === t.id ? 'page' : undefined}>
@@ -87,6 +91,11 @@ export default function App() {
             <QuickAdd placeholder="Capture a task" />
             <Inbox />
           </>
+        )}
+        {tab === 'graph' && (
+          <Suspense fallback={<p className="status">Loading graph…</p>}>
+            <GraphView />
+          </Suspense>
         )}
         {tab === 'done' && (
           <>

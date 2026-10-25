@@ -338,6 +338,156 @@ button {
   color: var(--accent);
 }
 
+/* --- drag to re-parent (show-all tree) --- */
+
+.grip {
+  flex: none;
+  width: 18px;
+  margin: 0 -4px 0 -6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 22px;
+  cursor: grab;
+  touch-action: none; /* let a drag on the grip move the task instead of scrolling */
+}
+
+.task.dragging > .task-main {
+  opacity: 0.35;
+}
+
+.task.over > .task-main {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.task.blocked > .task-main {
+  opacity: 0.3;
+}
+
+.root-drop {
+  /* Fixed so it neither shifts the tree when it appears (stale drop rects) nor scrolls away. */
+  position: fixed;
+  z-index: 10;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(608px, calc(100vw - 32px));
+  padding: 16px 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.root-drop.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.drag-overlay {
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+}
+
+/* --- graph --- */
+
+.app.wide {
+  max-width: none;
+  padding-bottom: 16px;
+}
+
+.app.wide .tabs {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.graph {
+  position: relative;
+  height: calc(100dvh - 150px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.graph .react-flow {
+  --xy-background-color: var(--surface);
+}
+
+.graph-hint {
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.graph-error {
+  position: absolute;
+  z-index: 5;
+  top: 8px;
+  left: 12px;
+  right: 12px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.gnode {
+  width: 180px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.gnode.actionable {
+  border: 2px solid var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.gnode-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gnode-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.gnode-meta .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.gnode .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+
 /* --- completed history --- */
 
 .day h2 {

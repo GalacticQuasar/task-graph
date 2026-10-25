@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useSetDone, type Group, type Task } from '../api'
+import { useSetDone, type Task } from '../api'
 import { TaskRow } from '../components/TaskRow'
-import { isActionable, type Forest } from '../forest'
+import { TaskTree } from '../components/TaskTree'
+import { isActionable } from '../forest'
 import { useForest } from '../useForest'
 
 type Props = {
@@ -40,7 +41,7 @@ export function Actionable({ groupId, showAll }: Props) {
     // Roots of the displayed tree: tasks whose parent isn't shown (done, or outside the filter).
     const shown = new Set(visible.map((t) => t.id))
     const roots = visible.filter((t) => t.parent_id === null || !shown.has(t.parent_id))
-    body = <TaskTree tasks={roots} shown={shown} {...rowProps} />
+    body = <TaskTree roots={roots} shown={shown} {...rowProps} />
   } else {
     const heads = visible.filter((t) => isActionable(forest, t))
     body = (
@@ -73,28 +74,5 @@ export function Actionable({ groupId, showAll }: Props) {
         </div>
       )}
     </>
-  )
-}
-
-type TreeProps = {
-  tasks: Task[]
-  shown: Set<number>
-  forest: Forest
-  groups: Map<number, Group>
-  onToggle: (task: Task) => void
-}
-
-function TaskTree({ tasks, shown, ...rowProps }: TreeProps) {
-  return (
-    <ul className="tasks">
-      {tasks.map((t) => {
-        const kids = (rowProps.forest.children.get(t.id) ?? []).filter((c) => shown.has(c.id))
-        return (
-          <TaskRow key={t.id} task={t} dimmed={!isActionable(rowProps.forest, t)} {...rowProps}>
-            {kids.length > 0 && <TaskTree tasks={kids} shown={shown} {...rowProps} />}
-          </TaskRow>
-        )
-      })}
-    </ul>
   )
 }

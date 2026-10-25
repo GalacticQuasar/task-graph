@@ -14,9 +14,15 @@ type Props = {
   /** Show a "then …" preview of what follows (used in heads-only mode). */
   showNext?: boolean
   onToggle: (task: Task) => void
+  /** Drag-and-drop wiring from TaskTree: a grip before the checkbox and a drop target. */
+  dnd?: {
+    handle: React.ReactNode
+    rowRef: (el: HTMLElement | null) => void
+    state?: 'over' | 'blocked' | 'dragging'
+  }
 }
 
-export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, children }: Props) {
+export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, children, dnd }: Props) {
   // While adding successors, each new task becomes the parent of the next one,
   // so typing "shave ⏎ shower ⏎ trim nails ⏎" builds a chain.
   const [chainParent, setChainParent] = useState<Task | null>(null)
@@ -25,8 +31,9 @@ export function TaskRow({ task, forest, groups, dimmed, showNext, onToggle, chil
   const deeper = countDescendants(forest, task.id) - next.length
 
   return (
-    <li className={dimmed ? 'task dimmed' : 'task'}>
-      <div className="task-main">
+    <li className={['task', dimmed && 'dimmed', dnd?.state].filter(Boolean).join(' ')}>
+      <div className="task-main" ref={dnd?.rowRef}>
+        {dnd?.handle}
         <input
           type="checkbox"
           checked={task.completed_at !== null}
@@ -88,7 +95,7 @@ function daysUntil(date: string): { due: Date; days: number } {
   return { due, days: Math.round((due.getTime() - today.getTime()) / 86_400_000) }
 }
 
-function DueDate({ date }: { date: string }) {
+export function DueDate({ date }: { date: string }) {
   const { due, days } = daysUntil(date)
   const label =
     days === 0
