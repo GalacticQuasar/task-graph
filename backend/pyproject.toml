@@ -1,0 +1,19 @@
+[project]
+name = "taskgraph"
+version = "0.1.0"
+description = "Task graph backend: tasks as a forest of sequences"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.162.0",
+    "sqlmodel>=0.0.48",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
