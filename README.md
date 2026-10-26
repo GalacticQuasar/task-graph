@@ -26,36 +26,52 @@ Tests: `cd backend && uv run pytest`. Frontend checks: `cd frontend && npm run b
 
 ## Deploy
 
-One container serves both the UI and the API. Data lives in SQLite under `/data`.
+One container serves both the UI and the API, with data in SQLite on a Docker volume. The
+recommended setup runs it on a VPS behind a **Cloudflare Tunnel** (`compose.yaml`). The
+`cloudflared` container dials out to Cloudflare, which serves your hostname over HTTPS. You
+don't open any inbound ports and don't manage any certificates. This needs a domain whose DNS
+is on Cloudflare; the free plan is enough.
 
-```sh
-docker build -t taskgraph .
-docker run -d --name taskgraph --restart unless-stopped \
-  -p 8000:8000 \
-  -e TASKGRAPH_TOKEN="$(openssl rand -hex 32)" \
-  -v taskgraph-data:/data \
-  taskgraph
-```
+1. **Install Docker on the server** (e.g. `curl -fsSL https://get.docker.com | sh`), then clone
+   this repo onto it. ARM servers such as Oracle's Ampere instances work: the image builds there
+   unchanged.
+2. **Create the tunnel:** in the Cloudflare dashboard go to *Networking → Tunnels*, create a
+   tunnel (type *Cloudflared*), and copy the token: the `eyJ…` string in the install command it
+   shows. Don't run that command.
+3. **Route a hostname** to the tunnel: e.g. `tasks.example.dev`, with service type **HTTP** and
+   URL **`app:8000`** (the compose service name, not localhost). Cloudflare creates the DNS
+   record for you.
+4. **Configure and start:**
 
-The image refuses to start without `TASKGRAPH_TOKEN`. Keep the token: you'll type it once on
-each device to log in, and phone shortcuts send it as a bearer token. Changing it logs out
-every device.
+   ```sh
+   cp .env.example .env    # set TASKGRAPH_TOKEN (openssl rand -hex 32) and TUNNEL_TOKEN
+   docker compose up -d --build
+   ```
 
-**Serve it over HTTPS.** Installing the app on a phone requires HTTPS, and the login cookie is
-only marked `Secure` over HTTPS. The easiest private setup is [Tailscale](https://tailscale.com):
-install it on the server and your phone, then run `tailscale serve --bg 8000` on the server to
-get `https://<machine>.<tailnet>.ts.net` with a valid certificate. That keeps the app off the
-public internet. Any other HTTPS reverse proxy (Caddy, nginx) works too.
+5. Open `https://tasks.example.dev` and log in with `TASKGRAPH_TOKEN`.
+
+To update, run `git pull && docker compose up -d --build`. To back up:
+`docker compose cp app:/data/taskgraph.db ./backup.db`.
+
+**About the token:** it's the only thing protecting a public deployment, so the image refuses to
+start unless it's at least 32 characters. You type it once per device to log in, and phone
+shortcuts send it as a bearer token. Changing it logs out every device. Keep `.env` private:
+`TUNNEL_TOKEN` lets anyone run your tunnel.
+
+**Other setups:** the image works behind any HTTPS reverse proxy (Caddy, nginx) via
+`docker run -p 127.0.0.1:8000:8000 -e TASKGRAPH_TOKEN=… -v taskgraph-data:/data <image>`, with
+the port bound to localhost so only the proxy can reach it. It also works
+privately over [Tailscale](https://tailscale.com) with `tailscale serve --bg 8000`. Serve it over
+HTTPS either way: installing on a phone requires it, and the login cookie is only marked
+`Secure` over HTTPS. Never expose port 8000 to the internet directly: the server trusts
+`X-Forwarded-*` headers.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `TASKGRAPH_TOKEN` | unset | Shared secret. Unset disables auth (dev only). |
-| `TASKGRAPH_REQUIRE_TOKEN` | `1` in Docker | Refuse to start without a token. |
+| `TASKGRAPH_REQUIRE_TOKEN` | `1` in Docker | Refuse to start without a token of 32+ characters. |
 | `TASKGRAPH_DB` | `sqlite:///taskgraph.db` (`/data/taskgraph.db` in Docker) | Database URL. |
 | `TASKGRAPH_STATIC` | unset (`/app/static` in Docker) | Built frontend to serve at `/`. |
-
-Back up by copying `taskgraph.db` out of the volume, e.g.
-`docker cp taskgraph:/data/taskgraph.db ./backup.db`.
 
 ## Phone setup
 

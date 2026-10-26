@@ -26,12 +26,23 @@ def configured_token() -> str | None:
     return os.environ.get("TASKGRAPH_TOKEN") or None
 
 
+MIN_TOKEN_LENGTH = 32
+
+
 def check_config() -> None:
-    if configured_token():
-        return
+    token = configured_token()
     if os.environ.get("TASKGRAPH_REQUIRE_TOKEN") == "1":
-        raise RuntimeError("TASKGRAPH_TOKEN must be set (TASKGRAPH_REQUIRE_TOKEN=1)")
-    log.warning("TASKGRAPH_TOKEN is not set: authentication is DISABLED")
+        if not token:
+            raise RuntimeError("TASKGRAPH_TOKEN must be set (TASKGRAPH_REQUIRE_TOKEN=1)")
+        # The token is the only thing guarding a public deployment, and there is no login
+        # rate limiting, so it must be long enough that guessing it is hopeless.
+        if len(token) < MIN_TOKEN_LENGTH:
+            raise RuntimeError(
+                f"TASKGRAPH_TOKEN must be at least {MIN_TOKEN_LENGTH} characters "
+                "(generate one with: openssl rand -hex 32)"
+            )
+    elif not token:
+        log.warning("TASKGRAPH_TOKEN is not set: authentication is DISABLED")
 
 
 def session_value(token: str) -> str:

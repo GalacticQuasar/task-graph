@@ -1,0 +1,23 @@
+# Production: the app plus a Cloudflare Tunnel. No ports are published; the only way in is
+# https://<your hostname> through Cloudflare. Configure secrets in .env (see .env.example).
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      TASKGRAPH_TOKEN: ${TASKGRAPH_TOKEN:?set TASKGRAPH_TOKEN in .env}
+    volumes:
+      - taskgraph-data:/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.3
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  taskgraph-data:

@@ -107,3 +107,12 @@ def test_static_files_and_spa_fallback(static_client):
 def test_static_path_traversal_blocked(static_client):
     for path in ["/../secret.txt", "/%2e%2e/secret.txt", "/assets/..%2f..%2fsecret.txt"]:
         assert "nope" not in static_client.get(path).text
+
+
+def test_require_token_rejects_short_token(monkeypatch):
+    monkeypatch.setenv("TASKGRAPH_REQUIRE_TOKEN", "1")
+    monkeypatch.setenv("TASKGRAPH_TOKEN", "x" * (auth.MIN_TOKEN_LENGTH - 1))
+    with pytest.raises(RuntimeError, match="at least"):
+        auth.check_config()
+    monkeypatch.setenv("TASKGRAPH_TOKEN", "x" * auth.MIN_TOKEN_LENGTH)
+    auth.check_config()

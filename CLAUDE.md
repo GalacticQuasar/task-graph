@@ -17,9 +17,11 @@ npm run dev                                     # :5173, proxies /api to :8000 (
 npm run build                                   # tsc -b + vite build (type errors fail the build)
 npm run lint                                    # oxlint
 
-# full stack in one container (repo root)
-docker build -t taskgraph . && docker run -p 8000:8000 -e TASKGRAPH_TOKEN=... -v taskgraph-data:/data taskgraph
+# production (repo root): app + Cloudflare Tunnel, secrets in .env (see .env.example)
+docker compose up -d --build
 ```
+
+Production runs on a VPS via `compose.yaml`: `cloudflared` routes the public hostname to `app:8000`, and no ports are published. Uvicorn runs with `--proxy-headers --forwarded-allow-ips *`, which is only safe because the app is unreachable except through the tunnel or a local proxy.
 
 For browser checks with playwright-cli, use `playwright-cli open --browser=chromium` (the default `chrome` channel isn't installed here).
 
@@ -37,7 +39,7 @@ For browser checks with playwright-cli, use `playwright-cli open --browser=chrom
 - `app/routes/tasks.py` uses `graph.py` for all forest logic, so keep tree rules there where they can be unit-tested. In `_set_parent`, compute `next_position` *before* assigning `parent_id`; otherwise autoflush counts the task as its own sibling.
 - PATCH uses `model_dump(exclude_unset=True)` so that an explicit `null` (e.g. detach `parent_id`, clear `due_date`) is different from "not sent".
 - Schema comes from `SQLModel.metadata.create_all`, and there are **no migrations**. Model changes won't alter an existing `taskgraph.db`.
-- Auth (`app/auth.py`): one shared secret, `TASKGRAPH_TOKEN`. It is accepted either as `Authorization: Bearer` or as the HttpOnly cookie set by `POST /api/login`, which holds an HMAC of the token. Task and group routers get `require_auth` at `include_router` time in `main.py`. `/api/health`, `/api/login` and `/api/logout` are public. `TASKGRAPH_REQUIRE_TOKEN=1` (set in the Dockerfile) makes startup fail without a token.
+- Auth (`app/auth.py`): one shared secret, `TASKGRAPH_TOKEN`. It is accepted either as `Authorization: Bearer` or as the HttpOnly cookie set by `POST /api/login`, which holds an HMAC of the token. Task and group routers get `require_auth` at `include_router` time in `main.py`. `/api/health`, `/api/login` and `/api/logout` are public. `TASKGRAPH_REQUIRE_TOKEN=1` (set in the Dockerfile) makes startup fail without a token of 32+ characters. That length requirement stands in for login rate limiting, which is deliberately absent.
 - Route order in `main.py` matters: the real routers come first, then an `/api/{path}` catch-all that returns 404, then (only if `TASKGRAPH_STATIC` is set) `mount_frontend`'s SPA catch-all, which serves `index.html` for unknown paths such as `/share`.
 - Tests: the `client` fixture overrides `get_session` with an in-memory StaticPool engine and deliberately does **not** enter `TestClient` as a context manager, so the lifespan (real DB, `check_config`) never runs. An autouse fixture clears the auth env vars, and auth tests opt in with `monkeypatch.setenv`.
 
